@@ -1,5 +1,5 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-
+import cgi
 
 class webServerHandler(BaseHTTPRequestHandler):
 
@@ -27,6 +27,17 @@ class webServerHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404, 'File Not Found: %s' % self.path)
 
+    def do_POST(self):
+        try:
+            self.send_response(301)
+            self.end_headers()
+
+            ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+            #cgi.parse headers returns main value of the MIME header and a dictionary of parameters
+            if ctype == 'multipart/form-data':
+                fields = cgi.parse_multipart(self.rfile, pdict)
+                messagecontent = fields.get('message')
+        except:
 
 def main():
     try:
