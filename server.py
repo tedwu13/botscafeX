@@ -16,6 +16,24 @@ class webServerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
+            if self.path.endswith('/edit'):
+                restaurantId = self.path.split("/")[2]
+                restaurantQuery = session.query(Restaurant).filter_by(id=restaurantId).one()
+
+                if restaurantQuery:
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/html')
+                    self.end_headers()
+                    output = ""
+                    output += "<html><body>"
+                    output += "<h1>Rename Restaurant"
+                    output += "</h1>"
+                    output += "<form method = 'POST' enctype='multipart/form-data' action = '/restaurants/%s/edit'>" %restaurantId
+                    output += "<input name = 'newRestaurantName' type = 'text' placeholder = 'Update Restaurant Name' > "
+                    output += "<input type='submit' value='Rename'>"
+                    output += "</form></body></html>"
+                    self.wfile.write(output)
+
             if self.path.endswith('/restaurants/new'):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
@@ -43,7 +61,7 @@ class webServerHandler(BaseHTTPRequestHandler):
                     output += "</br>"
 
                     # Objective 2 -- Add Edit and Delete Links
-                    output += "<a href ='#' >Edit </a> "
+                    output += "<a href ='/restaurants/%s/edit' >Edit </a> " % restaurant.id
                     output += "</br>"
                     output += "<a href =' #'> Delete </a>"
                     output += "</br></br></br>"
@@ -92,6 +110,26 @@ class webServerHandler(BaseHTTPRequestHandler):
         except:
             pass
 
+        try:
+            if self.path.endswith("/edit"):
+                ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+                if ctype == 'multipart/form-data':
+                    fields = cgi.parse_multipart(self.rfile, pdict)
+                    messagecontent = fields.get('newRestaurantName')
+                    restaurantId = self.path.split('/')[2]
+
+                    restaurantQuery = session.query(Restaurant).filter_by(id=restaurantId).one()
+                    print restaurantQuery
+                    if restaurantQuery != []:
+                        restaurantQuery.name = messagecontent[0]
+                        session.add(restaurantQuery)
+                        session.commit()
+                    self.send_response(301)
+                    self.send_header('Content-type', 'text/html')
+                    self.send_header('Location', '/restaurants')
+                    self.end_headers()
+        except: 
+            pass
 
 def main():
     try:
