@@ -69,17 +69,29 @@ class webServerHandler(BaseHTTPRequestHandler):
         except IOError:
             self.send_error(404, 'File Not Found: %s' % self.path)
 
+    # Objective 3 Step 3- Make POST method
     def do_POST(self):
         try:
             if self.path.endswith("/restaurants/new"):
-                ctype, pdict = cgi.parse_headers(self.headers.getheader('content-type'))
-                print pdict
-                print self.headers.getheader('content-type')
+                ctype, pdict = cgi.parse_header(
+                    self.headers.getheader('content-type'))
                 if ctype == 'multipart/form-data':
                     fields = cgi.parse_multipart(self.rfile, pdict)
-                    #- rfile is a file object open for reading positioned at the start of the optional input data part;
+                    messagecontent = fields.get('newRestaurantName')
+
+                    # Create new Restaurant Object
+                    newRestaurant = Restaurant(name=messagecontent[0])
+                    session.add(newRestaurant)
+                    session.commit()
+
+                    self.send_response(301)
+                    self.send_header('Content-type', 'text/html')
+                    self.send_header('Location', '/restaurants')
+                    self.end_headers()
+
         except:
             pass
+
 
 def main():
     try:
